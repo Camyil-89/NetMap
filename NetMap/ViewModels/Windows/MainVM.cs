@@ -20,35 +20,11 @@ namespace NetMap.ViewModels.Windows
 	}
 	public class MainVM : Base.ViewModel.BaseViewModel
 	{
-		//private static object _lock = new object();
 		public MainVM()
 		{
-			//BindingOperations.EnableCollectionSynchronization(Graphs, _lock);
+
 			#region Commands
 			#endregion
-
-			//var back_node = new TracertEntry() { Address = "127.0.0.1" };
-			//Graphs.AddVertex($"{back_node.Address}\n{back_node.ReplyStatus}");
-			//LayoutAlgorithmType = "EfficientSugiyama"
-			//OverlapRemovalAlgorithmType = "FSA" // ISOM
-			//HighlightAlgorithmType = "Simple"
-			//Task.Run(() =>
-			//{
-			//	foreach (var i in Service.TraceRoute.Tracert("142.251.39.110", 100, 2000))
-			//	{
-			//		Console.WriteLine($"{i.Address};{i.Back == null};{i.Next == null}");
-			//		var node_1 = $"{i.Back.Address}\n{i.Back.ReplyStatus}";
-			//		var node_2 = $"{i.Address}\n{i.ReplyStatus}";
-			//		App.Current.Dispatcher.Invoke(() =>
-			//		{
-			//			if (Graphs.Vertices.Contains(node_1) == false)
-			//				Graphs.AddVertex(node_1);
-			//			if (Graphs.Vertices.Contains(node_2) == false)
-			//				Graphs.AddVertex(node_2);
-			//			Graphs.AddEdge(new Edge<object>(node_1, node_2));
-			//		});
-			//	}
-			//});
 
 		}
 

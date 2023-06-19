@@ -63,11 +63,10 @@
                             <ScrollViewer HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Auto">
                                 <gp:GraphLayout Graph="{Binding Graphs}"
-                                                 LayoutAlgorithmType="EfficientSugiyama"
+                                                 LayoutAlgorithmType="ISOM"
                                                  OverlapRemovalAlgorithmType="FSA"
                                                 HighlightAlgorithmType="Simple"
                                                 IsAnimationEnabled="False"
-                                                
                                                 AnimationLength="0"
                                     IsHitTestVisible="True"/>
                             </ScrollViewer>

@@ -26,7 +26,8 @@ namespace NetMap.Service
 
 		public void AddNext(TracertEntry entry)
 		{
-			if (Next.FirstOrDefault((i) => i.Address == entry.Address) == null)
+			Console.WriteLine($"{Address}|{entry.Address}|{HopID}|{entry.HopID}");
+			if (Next.FirstOrDefault((i) => i.Address == entry.Address) == null && Address != entry.Address)
 			{
 				Next.Add(entry);
 			}
@@ -119,12 +120,12 @@ namespace NetMap.Service
 					}
 					catch (SocketException) { Console.WriteLine("asda"); }
 				}
-				// Return out TracertEntry object with all the information about the hop.
 				var ent = new TracertEntry()
 				{
 					HopID = pingOptions.Ttl,
 					Address = reply.Address == null ? "N/A" : reply.Address.ToString(),
 					Hostname = hostname,
+					Find = (reply.Address == null ? "N/A" : reply.Address.ToString()) == ipAddress,
 					ReplyTime = pingReplyTime.ElapsedMilliseconds,
 					ReplyStatus = reply.Status,
 					Dns = Dns_name,

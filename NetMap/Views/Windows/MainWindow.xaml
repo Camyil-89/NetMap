@@ -63,9 +63,11 @@
                             <ScrollViewer HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Auto">
                                 <gp:GraphLayout Graph="{Binding Graphs}"
-                                    LayoutAlgorithmType="EfficientSugiyama"
-                                    OverlapRemovalAlgorithmType="FSA"
+                                                 LayoutAlgorithmType="EfficientSugiyama"
+                                                 OverlapRemovalAlgorithmType="FSA"
+                                                HighlightAlgorithmType="Simple"
                                                 IsAnimationEnabled="False"
+                                                
                                                 AnimationLength="0"
                                     IsHitTestVisible="True"/>
                             </ScrollViewer>
@@ -74,7 +76,36 @@
                 </Grid>
             </TabItem>
             <TabItem Header="Настройки">
-
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="300"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <GroupBox Header="Настройки">
+                        <StackPanel Orientation="Vertical">
+                            <GroupBox Header="Настройки пинга">
+                                <StackPanel Orientation="Vertical">
+                                    <Grid Margin="0 0 0 2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition/>
+                                            <ColumnDefinition/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="TTL" FontSize="14" Grid.Column="0"/>
+                                        <TextBox FontSize="14" Grid.Column="1" Text="{Binding Settings.Parametrs.TTL}"/>
+                                    </Grid>
+                                    <Grid Margin="0 0 0 2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition/>
+                                            <ColumnDefinition/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Таймаут" FontSize="14" Grid.Column="0"/>
+                                        <TextBox FontSize="14" Grid.Column="1" Text="{Binding Settings.Parametrs.Timeout}"/>
+                                    </Grid>
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
             </TabItem>
         </TabControl>
     </DockPanel>

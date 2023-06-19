@@ -1,5 +1,6 @@
 ﻿
 using NetMap.Base.Command;
+using NetMap.Models;
 using NetMap.Service;
 using QuickGraph;
 using System;
@@ -37,6 +38,7 @@ namespace NetMap.ViewModels.Windows
 		public BidirectionalGraph<object, IEdge<object>> Graphs { get => _Graphs; set => Set(ref _Graphs, value); }
 		#endregion
 
+		public Settings Settings => Settings.Instance;
 
 		#region TraceMode: Description
 		/// <summary>Description</summary>

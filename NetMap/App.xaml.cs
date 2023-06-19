@@ -38,6 +38,7 @@ namespace NetMap
 		public static void ConfigureServices(HostBuilderContext builder, IServiceCollection services)
 		{
 			services.AddSingleton<ViewModels.Windows.MainVM>();
+			services.AddSingleton<Models.Settings>();
 		}
 	}
 }

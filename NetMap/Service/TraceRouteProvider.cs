@@ -17,9 +17,10 @@ namespace NetMap.Service
 	{
 		private static TracertEntry EntryMain = new TracertEntry()
 		{
-			Address = "127.0.0.1",
+			Address = "127.0.0.1\nЭто вы",
 			ReplyStatus = System.Net.NetworkInformation.IPStatus.Unknown
 		};
+		private static string TargetAddress = "";
 		private static MainVM MainVM => App.Host.Services.GetRequiredService<MainVM>();
 		public static string GetIPAddressFromDNS(string hostname)
 		{
@@ -56,7 +57,11 @@ namespace NetMap.Service
 					{
 						if (is_change)
 						{
-							ReloadMap();
+							try
+							{
+								ReloadMap();
+							}
+							catch { }
 							is_change = false;
 						}
 						Thread.Sleep(16);
@@ -65,7 +70,8 @@ namespace NetMap.Service
 				});
 				try
 				{
-					foreach (var i in TraceRoute.Tracert(ip, 100, 2000))
+					TargetAddress = ip;
+					foreach (var i in TraceRoute.Tracert(ip, 100, 400))
 					{
 						StatusBarProvider.ShowMessage($"Поиск пути к {ip} | {i.Back.Address} > {i.Address}");
 
@@ -73,7 +79,7 @@ namespace NetMap.Service
 						if (find != null)
 							find.AddNext(TracertEntry.Copy(find, i));
 						else
-							EntryMain.AddNext(TracertEntry.Copy(EntryMain,i));
+							EntryMain.AddNext(TracertEntry.Copy(EntryMain, i));
 
 						is_change = true;
 					}
@@ -88,29 +94,30 @@ namespace NetMap.Service
 		public static void ReloadMap()
 		{
 			MainVM.Graphs = new BidirectionalGraph<object, IEdge<object>>();
-
 			void Next(TracertEntry master, TracertEntry slave)
 			{
 				string node_1 = $"{master.Address}";
 				string node_2 = "";
-				if (slave.ReplyStatus == System.Net.NetworkInformation.IPStatus.Success)
+
+				if (master.Address == TargetAddress)
+				{
+					node_1 = $"{master.Address}\nКонечный узел";
+				}
+
+				if (slave.Address == TargetAddress)
 					node_2 = $"{slave.Address}\nКонечный узел";
+				else if (slave.Find)
+					node_2 = $"{slave.Address}\nНеподтвержденный";
 				else
 					node_2 = $"{slave.Address}";
+
+
 				App.Current.Dispatcher.Invoke(() =>
 				{
 					if (MainVM.Graphs.Vertices.Contains(node_1) == false)
 						MainVM.Graphs.AddVertex(node_1);
 					if (MainVM.Graphs.Vertices.Contains(node_2) == false)
 						MainVM.Graphs.AddVertex(node_2);
-
-					foreach (var i in MainVM.Graphs.Edges)
-					{
-						if (i.Target == node_2)
-						{
-							continue;
-						}
-					}
 					MainVM.Graphs.AddEdge(new Edge<object>(node_1, node_2));
 				});
 				foreach (var i in slave.Next)
@@ -141,7 +148,7 @@ namespace NetMap.Service
 		{
 			EntryMain = new TracertEntry()
 			{
-				Address = "127.0.0.1",
+				Address = "127.0.0.1\nЭто вы",
 				ReplyStatus = System.Net.NetworkInformation.IPStatus.Unknown
 			};
 			MainVM.Graphs.Clear();

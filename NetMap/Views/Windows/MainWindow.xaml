@@ -1,0 +1,81 @@
+﻿<Window x:Class="NetMap.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:gp="clr-namespace:GraphSharp.Controls;assembly=GraphSharp.Controls"
+        xmlns:local="clr-namespace:NetMap"
+        mc:Ignorable="d"
+        Title="NetMap" Height="700" Width="1200"
+        WindowStartupLocation="CenterScreen"
+        DataContext="{Binding MainVM, Source={StaticResource Locator}}">
+    <DockPanel>
+        <StatusBar DockPanel.Dock="Bottom" Height="25">
+            <Grid>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding TextStatusBottomLeft}"
+                               VerticalAlignment="Center"
+                               Margin="5 0 0 0"/>
+                </StackPanel>
+            </Grid>
+        </StatusBar>
+        <TabControl>
+            <TabItem Header="Карта сети">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox Text="{Binding TraceAddress, UpdateSourceTrigger=PropertyChanged}"
+                                     FontSize="14"
+                                     Height="25"
+                                     VerticalContentAlignment="Center"
+                                     AcceptsReturn="False"
+                                     Width="200">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Key="Return" Command="{Binding TraceCommand}"/>
+                                </TextBox.InputBindings>
+                            </TextBox>
+                            <Button Content="{Binding TextButtonTrace}"
+                                    Height="25"
+                                    IsEnabled="{Binding TraceButtonEnable}"
+                                    Width="90"
+                                    Margin="5 0 0 0"
+                                    Command="{Binding TraceCommand}"/>
+                            <Button Content="Очистить"
+                                    Height="25"
+                                    IsEnabled="{Binding EnableButtonClear}"
+                                    Width="90"
+                                    Margin="5 0 0 0"
+                                    Command="{Binding ClearTraceMapCommand}"/>
+                            <Button Content="Перерисовать"
+                                    Height="25"
+                                    IsEnabled="{Binding EnableButtonClear}"
+                                    Width="90"
+                                    Margin="5 0 0 0"
+                                    Command="{Binding ReloadMapCommand}"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid Grid.Row="1">
+                        <Border BorderThickness="0 1 0 0" BorderBrush="Black">
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto">
+                                <gp:GraphLayout Graph="{Binding Graphs}"
+                                    LayoutAlgorithmType="EfficientSugiyama"
+                                    OverlapRemovalAlgorithmType="FSA"
+                                                IsAnimationEnabled="False"
+                                                AnimationLength="0"
+                                    IsHitTestVisible="True"/>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Настройки">
+
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

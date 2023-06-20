@@ -18,7 +18,7 @@ namespace NetMap.Service
 {
 	public static class TraceRouteProvider
 	{
-		private static TraceRouteItem EntryMain;
+		public static TraceRouteItem EntryMain { get; private set; }
 		private static string TargetAddress = "";
 		private static MainVM MainVM => App.Host.Services.GetRequiredService<MainVM>();
 		public static string GetIPAddressFromDNS(string hostname)
@@ -49,8 +49,6 @@ namespace NetMap.Service
 		}
 		public static void StartTrace(string address)
 		{
-			if (EntryMain == null)
-				CreateMainRoute();
 			MainVM.TextButtonTrace = "Отмена";
 			MainVM.TraceMode = ModeTrace.Stop;
 			MainVM.EnableButtonClear = false;
@@ -58,35 +56,13 @@ namespace NetMap.Service
 			Task.Run(() =>
 			{
 				StatusBarProvider.ShowMessage("Разрешение доменных имен..");
-				var ip = GetIPAddressFromDNS(address);
-				StatusBarProvider.ShowMessage($"Поиск пути к {ip}");
+				TargetAddress = GetIPAddressFromDNS(address);
+				StatusBarProvider.ShowMessage($"Поиск пути к {TargetAddress}");
 				bool is_work = true;
 				bool is_change = false;
 				try
 				{
-					TargetAddress = ip;
-					TraceSettings traceSettings = new TraceSettings()
-					{
-						TTL = Settings.Instance.Parametrs.TTL,
-						TargetAddress = ip,
-						TargetAddressDNS = IsDNS(address),
-						Timeout = Settings.Instance.Parametrs.Timeout,
-						MaxHops = Settings.Instance.Parametrs.TTL,
-					};
-					foreach (var route in RouteBuilder.TraceRoute(traceSettings))
-					{
-						App.Current.Dispatcher.Invoke(() =>
-						{
-							var find_route = RouteBuilder.FindRoute(route.ParentRoute.Address, EntryMain);
-							var copy_route = route.Copy();
-							find_route.AddChildrenRoute(copy_route);
-							if (FindVertices(find_route) == null)
-								MainVM.Graphs.AddVertex(find_route);
-							if (FindVertices(copy_route) == null)
-								MainVM.Graphs.AddVertex(copy_route);
-							MainVM.Graphs.AddEdge(new Edge<object>(FindVertices(find_route), FindVertices(copy_route)));
-						});
-					}
+					Trace(address);
 				}
 				catch (Exception ex) { MessageBox.Show($"Error:\n{ex.Message}"); }
 				is_work = false;
@@ -97,23 +73,73 @@ namespace NetMap.Service
 				StatusBarProvider.CloseMessage();
 			});
 		}
-		private static object FindVertices(TraceRouteItem route)
+		public static void Trace(string address)
+		{
+			TraceSettings traceSettings = new TraceSettings()
+			{
+				TTL = Settings.Instance.Parametrs.TTL,
+				TargetAddress = GetIPAddressFromDNS(address),
+				TraceMap = Settings.Instance.Parametrs.DynamicTraceMap,
+				TargetAddressDNS = IsDNS(address),
+				EnableReloadMap = true,
+				Timeout = Settings.Instance.Parametrs.Timeout,
+				MaxHops = Settings.Instance.Parametrs.TTL,
+			};
+			if (EntryMain == null)
+				CreateMainRoute();
+			Trace(traceSettings);
+		}
+		public static void Trace(TraceSettings traceSettings)
+		{
+			foreach (var route in RouteBuilder.TraceRoute(traceSettings))
+			{
+				App.Current.Dispatcher.Invoke(() =>
+				{
+					var find_route = RouteBuilder.FindRoute(route.ParentRoute.Address, EntryMain);
+					var copy_route = route.Copy();
+					find_route.AddChildrenRoute(copy_route);
+					if (traceSettings.TraceMap == true && Settings.Instance.Parametrs.EnableTraceMap == true)
+					{
+						if (FindVertices(find_route) == null)
+							MainVM.Graphs.AddVertex(find_route);
+						if (FindVertices(copy_route) == null)
+							MainVM.Graphs.AddVertex(copy_route);
+						AddEdge(find_route, copy_route);
+					}
+				});
+			}
+			if (traceSettings.TraceMap == false && traceSettings.EnableReloadMap == true)
+				ReloadMap();
+		}
+		private static void AddEdge(TraceRouteItem source, TraceRouteItem target)
+		{
+			foreach (var i in MainVM.Graphs.Edges)
+			{
+				if (((TraceRouteItem)i.Source).Address == source.Address && ((TraceRouteItem)i.Source).Address == target.Address)
+				{
+					return;
+				}
+			}
+			MainVM.Graphs.AddEdge(new Edge<object>(FindVertices(source), FindVertices(target)));
+		}
+		public static object FindVertices(TraceRouteItem route)
 		{
 			return MainVM.Graphs.Vertices.FirstOrDefault((i) => ((TraceRouteItem)i).Address == route.Address);
 		}
 		public static void ReloadMap()
 		{
 			MainVM.Graphs = new BidirectionalGraph<object, IEdge<object>>();
+			if (Settings.Instance.Parametrs.EnableTraceMap == false)
+				return;
 			void Next(TraceRouteItem master, TraceRouteItem slave)
-			{
-
+			{	
 				App.Current.Dispatcher.Invoke(() =>
 				{
 					if (FindVertices(master) == null)
 						MainVM.Graphs.AddVertex(master);
 					if (FindVertices(slave) == null)
 						MainVM.Graphs.AddVertex(slave);
-					MainVM.Graphs.AddEdge(new Edge<object>(FindVertices(master), FindVertices(slave)));
+					AddEdge(master, slave);
 				});
 				foreach (var i in slave.ChildrenRoutes)
 				{
@@ -139,7 +165,7 @@ namespace NetMap.Service
 			});
 
 		}
-		private static void CreateMainRoute()
+		public static void CreateMainRoute()
 		{
 			EntryMain = new TraceRouteItem()
 			{

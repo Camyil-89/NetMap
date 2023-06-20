@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Automation.Peers;
 
 namespace NetMap.Service
 {
@@ -14,8 +15,13 @@ namespace NetMap.Service
 		public static void ShowMessage(string text)
 		{
 			MainVM.VisibilityBottomLeftStatus = System.Windows.Visibility.Visible;
-			MainVM.TextStatusBottomLeft = text;
+			MainVM.TextStatusBottomLeft = $"| {text}";
 
+		}
+		public static void ShowInfoAboutAdapters(string text, string ToolTip)
+		{
+			MainVM.InfoAboutAdapters = text;
+			MainVM.ToolTipInfoAboutAdapters = ToolTip;
 		}
 		public static void CloseMessage()
 		{

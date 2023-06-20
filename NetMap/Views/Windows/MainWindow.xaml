@@ -11,14 +11,29 @@
         DataContext="{Binding MainVM, Source={StaticResource Locator}}">
     <DockPanel>
         <StatusBar DockPanel.Dock="Bottom" Height="25">
-            <Grid>
-                <StackPanel Orientation="Horizontal" Visibility="{Binding VisibilityBottomLeftStatus}">
-                    <TextBlock Text="{Binding TextStatusBottomLeft}"
+			<Grid>
+				<StackPanel Orientation="Horizontal">
+					<StackPanel Orientation="Horizontal"
+							Margin="0 0 5 0">
+						<TextBlock VerticalAlignment="Center"
+							   Text="{Binding InfoAboutAdapters}"
+							   ToolTipService.InitialShowDelay="100">
+							<TextBlock.ToolTip>
+								<ToolTip>
+									<TextBlock Text="{Binding ToolTipInfoAboutAdapters}"/>
+								</ToolTip>
+							</TextBlock.ToolTip>
+					</TextBlock>
+					</StackPanel>
+					<StackPanel Orientation="Horizontal"
+							Visibility="{Binding VisibilityBottomLeftStatus}">
+						<TextBlock Text="{Binding TextStatusBottomLeft}"
                                VerticalAlignment="Center"
                                Margin="5 0 0 0"/>
-                </StackPanel>
-            </Grid>
-        </StatusBar>
+					</StackPanel>
+				</StackPanel>
+			</Grid>
+		</StatusBar>
         <TabControl>
             <TabItem Header="Карта сети">
                 <Grid>
@@ -27,6 +42,10 @@
                         <RowDefinition/>
                     </Grid.RowDefinitions>
                     <Grid Grid.Row="0">
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="80*"/>
+							<ColumnDefinition Width="20*"/>
+						</Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal">
                             <TextBox Text="{Binding TraceAddress, UpdateSourceTrigger=PropertyChanged}"
                                      FontSize="14"
@@ -57,19 +76,40 @@
                                     Margin="5 0 0 0"
                                     Command="{Binding ReloadMapCommand}"/>
                             <Border BorderThickness="2 0 0 0" Margin="5 0 5 0" BorderBrush="Gray"/>
-                            <Button Content="{Binding TextButtonScanNetwork}"
+							<TextBox FontSize="14"
+									 Height="25"
+									 Width="110"
+									 VerticalContentAlignment="Center"
+									 Text="{Binding MinAddress}"/>
+							<Border BorderBrush="Black" BorderThickness="0 2 0 0" Margin="5" Width="10" VerticalAlignment="Center"/>
+							<TextBox FontSize="14"
+									 Height="25"
+									 Width="110"
+									 VerticalContentAlignment="Center"
+									 Text="{Binding MaxAddress}"/>
+							<Button Content="{Binding TextButtonScanNetwork}"
                                     Height="25"
                                     IsEnabled="{Binding EnableScanButton}"
                                     Width="120"
                                     Margin="5 0 0 0"
                                     Command="{Binding ScanLocalNetworkCommand}"/>
                         </StackPanel>
-                    </Grid>
+						<Grid Grid.Column="1" Margin="0 0 5 0">
+							<StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+								<CheckBox Content="Карта маршрута"
+										  VerticalContentAlignment="Center"
+										  FlowDirection="RightToLeft"
+										  FontSize="14"
+										  IsChecked="{Binding Settings.Parametrs.EnableTraceMap}"/>
+							</StackPanel>
+						</Grid>
+					</Grid>
                     <Grid Grid.Row="1" Margin="0 2 0 0">
-                        <Border BorderThickness="0 1 0 0" BorderBrush="Black">
+                        <Border BorderThickness="0 1 0 0" BorderBrush="Gray">
                             <ScrollViewer HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Auto">
                                 <gp:GraphLayout Graph="{Binding Graphs}"
+												 IsEnabled="{Binding Settings.Parametrs.EnableTraceMap}"
                                                  LayoutAlgorithmType="{Binding Settings.Parametrs.LayoutAlgorithmType}"
                                                  OverlapRemovalAlgorithmType="FSA"
                                                 HighlightAlgorithmType="Simple"
@@ -82,10 +122,10 @@
                 </Grid>
             </TabItem>
             <TabItem Header="Настройки">
-                <Grid>
+                <Grid HorizontalAlignment="Center">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="500"/>
-                        <ColumnDefinition/>
+                        <ColumnDefinition Width="600"/>
+                        <ColumnDefinition Width="590"/>
                     </Grid.ColumnDefinitions>
                     <GroupBox Header="Настройки">
                         <StackPanel Orientation="Vertical">
@@ -122,10 +162,97 @@
                                                   Grid.Column="1"
                                                   SelectedItem="{Binding Settings.Parametrs.LayoutAlgorithmType, UpdateSourceTrigger=PropertyChanged}"/>
                                     </Grid>
+									<Grid Margin="0 0 0 2">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition/>
+											<ColumnDefinition Width="150"/>
+										</Grid.ColumnDefinitions>
+										<CheckBox FlowDirection="RightToLeft"
+												  Grid.ColumnSpan="2"
+												  Content="Диначически отрисовывать маршрут"
+												  FontSize="14"
+												  Margin="0 0 135 0"
+												  IsChecked="{Binding Settings.Parametrs.DynamicTraceMap}"
+												  VerticalContentAlignment="Center"/>
+									</Grid>
                                 </StackPanel>
                             </GroupBox>
-                        </StackPanel>
+							<GroupBox Header="Сканирование локальной сети">
+								<StackPanel Orientation="Vertical">
+									<Grid Margin="0 0 0 2">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition/>
+											<ColumnDefinition Width="150"/>
+										</Grid.ColumnDefinitions>
+										<TextBlock Text="Таймаут пинга (влияет на оперативную память) в миллисекундах" FontSize="14" Grid.Column="0"/>
+										<TextBox FontSize="14" Grid.Column="1" Text="{Binding Settings.Parametrs.TimeoutPingLocalNetwork}"/>
+									</Grid>
+									<Grid Margin="0 0 0 2">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition/>
+											<ColumnDefinition Width="150"/>
+										</Grid.ColumnDefinitions>
+										<TextBlock Text="Частота очистки оперативной памяти" FontSize="14" Grid.Column="0"/>
+										<ComboBox FontSize="14"
+                                                  ItemsSource="{Binding ListGCCollectTimeout}"
+                                                  Grid.Column="1"
+                                                  SelectedItem="{Binding Settings.Parametrs.GCCollectTimeout, UpdateSourceTrigger=PropertyChanged}"
+												  ToolTipService.InitialShowDelay="100">
+											<ComboBox.ToolTip>
+												<ToolTip>
+													<TextBlock>
+														Уменьшает потребление оперативной памяти.
+														<LineBreak/>
+														Влияет на частоту очистки памяти.
+														<LineBreak/>
+														Чем меньше значение тем чаще очищается.
+														<LineBreak/>
+														0 - отключает.
+													</TextBlock>
+												</ToolTip>
+											</ComboBox.ToolTip>
+										</ComboBox>
+									</Grid>
+									<Grid Margin="0 0 0 2">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition/>
+											<ColumnDefinition Width="150"/>
+										</Grid.ColumnDefinitions>
+										<CheckBox FlowDirection="RightToLeft"
+												  Grid.ColumnSpan="2"
+												  Content="Диначически отрисовывать маршрут во время сканирования"
+												  FontSize="14"
+												  Margin="0 0 135 0"
+												  IsChecked="{Binding Settings.Parametrs.DynamicTraceMapOnScan}"
+												  VerticalContentAlignment="Center"/>
+									</Grid>
+								</StackPanel>
+							</GroupBox>
+						</StackPanel>
                     </GroupBox>
+					<GroupBox Grid.Column="1" Header="Прочее" Width="590" HorizontalAlignment="Left">
+						<StackPanel Orientation="Vertical">
+							<GroupBox Header="Сканирование сети" Height="300">
+								<Grid>
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition/>
+										<ColumnDefinition Width="150"/>
+									</Grid.ColumnDefinitions>
+									<ListView ItemsSource="{Binding ListNetAddresses}" FontSize="14"/>
+									<StackPanel Orientation="Vertical" Grid.Column="1" Margin="5 0 5 5">
+										<Button Content="Сканировать"
+												Margin="0 0 0 5"
+												FontSize="14"
+												Command="{Binding ScanPoolAddressesCommand}"
+												IsEnabled="{Binding EnableButtonClear}"/>
+										<Border BorderBrush="Gray" BorderThickness="0 2 0 0" Margin="0 0 0 5"/>
+										<Button Content="Сохранить" Margin="0 0 0 5" FontSize="14" Command="{Binding SaveAddressesCommand}"/>
+										<Button Content="Загрузить" Margin="0 0 0 5" FontSize="14" Command="{Binding LoadAddressesCommand}"/>
+									</StackPanel>
+								</Grid>
+							</GroupBox>
+						</StackPanel>
+					</GroupBox>
                 </Grid>
             </TabItem>
         </TabControl>

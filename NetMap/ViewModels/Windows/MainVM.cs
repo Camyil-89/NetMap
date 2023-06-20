@@ -1,17 +1,22 @@
 ﻿
 using GraphSharp.Controls;
+using Microsoft.Win32;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using NetMap.Base.Command;
 using NetMap.Models;
 using NetMap.Service;
+using NetMap.Service.Net;
 using QuickGraph;
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace NetMap.ViewModels.Windows
@@ -23,11 +28,19 @@ namespace NetMap.ViewModels.Windows
 	}
 	public class MainVM : Base.ViewModel.BaseViewModel
 	{
+		private static object _lock = new object();
 		public MainVM()
 		{
-
+			BindingOperations.EnableCollectionSynchronization(ListNetAddresses, _lock);
 			#region Commands
 			#endregion
+			App.Current.MainWindow.Loaded += MainWindow_Loaded;
+		}
+
+		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+		{
+			Console.WriteLine("IsLoaded");
+			AdapterProvider.GetAdapters();
 		}
 
 		#region Parametrs
@@ -104,8 +117,61 @@ namespace NetMap.ViewModels.Windows
 		/// <summary>Description</summary>
 		public string TextButtonScanNetwork { get => _TextButtonScanNetwork; set => Set(ref _TextButtonScanNetwork, value); }
 		#endregion
+
+
+		#region ToolTipInfoAboutAdapters: Description
+		/// <summary>Description</summary>
+		private string _ToolTipInfoAboutAdapters;
+		/// <summary>Description</summary>
+		public string ToolTipInfoAboutAdapters { get => _ToolTipInfoAboutAdapters; set => Set(ref _ToolTipInfoAboutAdapters, value); }
 		#endregion
 
+		#region InfoAboutAdapters: Description
+		/// <summary>Description</summary>
+		private string _InfoAboutAdapters;
+		/// <summary>Description</summary>
+		public string InfoAboutAdapters { get => _InfoAboutAdapters; set => Set(ref _InfoAboutAdapters, value); }
+		#endregion
+
+
+		#region ListNetAddresses: Description
+		/// <summary>Description</summary>
+		private ObservableCollection<string> _ListNetAddresses = new ObservableCollection<string>();
+		/// <summary>Description</summary>
+		public ObservableCollection<string> ListNetAddresses { get => _ListNetAddresses; set => Set(ref _ListNetAddresses, value); }
+		#endregion
+
+
+		#region MinAddress: Description
+		/// <summary>Description</summary>
+		private string _MinAddress = "192.168.1.0";
+		/// <summary>Description</summary>
+		public string MinAddress { get => _MinAddress; set => Set(ref _MinAddress, value); }
+		#endregion
+
+
+		#region MaxAddress: Description
+		/// <summary>Description</summary>
+		private string _MaxAddress = "192.168.1.255";
+		/// <summary>Description</summary>
+		public string MaxAddress { get => _MaxAddress; set => Set(ref _MaxAddress, value); }
+		#endregion
+		#endregion
+
+
+		#region LocalNetworkSubnet: Description
+		/// <summary>Description</summary>
+		private string[] _LocalNetworkSubnet = new string[4] { "192", "168", "-", "-" };
+		/// <summary>Description</summary>
+		public string[] LocalNetworkSubnet { get => _LocalNetworkSubnet; set => Set(ref _LocalNetworkSubnet, value); }
+		#endregion
+
+		#region ListGCCollectTimeout: Description
+		/// <summary>Description</summary>
+		private ObservableCollection<int> _ListGCCollectTimeout = new ObservableCollection<int>() { 0, 100, 500, 1000, 2500, 5000, 10000 };
+		/// <summary>Description</summary>
+		public ObservableCollection<int> ListGCCollectTimeout { get => _ListGCCollectTimeout; set => Set(ref _ListGCCollectTimeout, value); }
+		#endregion
 
 		#region ListLayoutAlgorithmType: Description
 		/// <summary>Description</summary>
@@ -154,7 +220,10 @@ namespace NetMap.ViewModels.Windows
 		private bool CanClearTraceMapCommandExecute(object e) => true;
 		private void OnClearTraceMapCommandExecuted(object e)
 		{
-			TraceRouteProvider.ClearGraphs();
+			if (MessageBox.Show("Вы уверены что хотите очистить карту?", "NetMap", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+			{
+				TraceRouteProvider.ClearGraphs();
+			}
 		}
 		#endregion
 
@@ -164,14 +233,82 @@ namespace NetMap.ViewModels.Windows
 		private bool CanScanLocalNetworkCommandExecute(object e) => true;
 		private void OnScanLocalNetworkCommandExecuted(object e)
 		{
+			
 			if (TextButtonScanNetwork == "Отмена")
 			{
-
+				Service.Net.ScannerLocalNetwork.StopScanNetwork();
 			}
 			else
 			{
-				Service.Net.ScannerLocalNetwork.ScanNetwork();
+				byte[] address_min = new byte[4];
+				byte[] address_max = new byte[4];
+				try
+				{
+					ListNetAddresses.Clear();
+					address_min = ScannerLocalNetwork.ParseAddress(MinAddress);
+					address_max = ScannerLocalNetwork.ParseAddress(MaxAddress);
+					if (ScannerLocalNetwork.MinThenMax(address_min, address_max) == false)
+					{
+						MessageBox.Show("Левый адрес должен быть меньше чем правый!", "NetMap");
+						return;
+					}
+				} catch { MessageBox.Show("Не правильный формат адресов!", "NetMap"); }
+				Service.Net.ScannerLocalNetwork.ScanNetwork(address_min, address_max);
+			}
+		}
+		#endregion
 
+
+		#region ScanPoolAddressesCommand: Description
+		private ICommand _ScanPoolAddressesCommand;
+		public ICommand ScanPoolAddressesCommand => _ScanPoolAddressesCommand ??= new LambdaCommand(OnScanPoolAddressesCommandExecuted, CanScanPoolAddressesCommandExecute);
+		private bool CanScanPoolAddressesCommandExecute(object e) => ListNetAddresses.Count > 0;
+		private void OnScanPoolAddressesCommandExecuted(object e)
+		{
+			Service.Net.ScannerLocalNetwork.ScanPoolNetwork(ListNetAddresses);
+		}
+		#endregion
+
+		#region SaveAddressesCommand: Description
+		private ICommand _SaveAddressesCommand;
+		public ICommand SaveAddressesCommand => _SaveAddressesCommand ??= new LambdaCommand(OnSaveAddressesCommandExecuted, CanSaveAddressesCommandExecute);
+		private bool CanSaveAddressesCommandExecute(object e) => ListNetAddresses.Count > 0;
+		private void OnSaveAddressesCommandExecuted(object e)
+		{
+			Directory.CreateDirectory($"{Program.PathToSave}\\saves");
+			SaveFileDialog dialog = new SaveFileDialog();
+			dialog.InitialDirectory = $"{Program.PathToSave}\\saves";
+			dialog.FileName = $"{DateTime.Now.Ticks}.txt";
+			if (dialog.ShowDialog() == true)
+			{
+				File.WriteAllLines(dialog.FileName, ListNetAddresses);
+			}
+
+		}
+		#endregion
+
+		#region LoadAddressesCommand: Description
+		private ICommand _LoadAddressesCommand;
+		public ICommand LoadAddressesCommand => _LoadAddressesCommand ??= new LambdaCommand(OnLoadAddressesCommandExecuted, CanLoadAddressesCommandExecute);
+		private bool CanLoadAddressesCommandExecute(object e) => true;
+		private void OnLoadAddressesCommandExecuted(object e)
+		{
+			Directory.CreateDirectory($"{Program.PathToSave}\\saves");
+			CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+			dialog.IsFolderPicker = false;
+			dialog.InitialDirectory = $"{Program.PathToSave}\\saves";
+			dialog.Multiselect = false;
+			if (dialog.ShowDialog() == CommonFileDialogResult.Ok && dialog.FileNames.Count() > 0)
+			{
+				try
+				{
+					ListNetAddresses.Clear();
+					foreach (var i in File.ReadAllLines(dialog.FileName))
+					{
+						ListNetAddresses.Add(i);
+					}
+				}
+				catch { MessageBox.Show("Не удалось загрузить!", "NetMap"); }
 			}
 		}
 		#endregion

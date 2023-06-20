@@ -14,9 +14,11 @@ namespace NetMap
 {
 	public static class Program
 	{
+		public static string PathToSave = $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\NetMap";
 		[STAThread]
 		public static void Main(string[] args)
 		{
+			Directory.CreateDirectory(PathToSave);
 			var app = new App();
 			app.InitializeComponent();
 			//app.DispatcherUnhandledException += App_DispatcherUnhandledException;

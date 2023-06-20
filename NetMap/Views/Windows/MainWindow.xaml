@@ -12,7 +12,7 @@
     <DockPanel>
         <StatusBar DockPanel.Dock="Bottom" Height="25">
             <Grid>
-                <StackPanel Orientation="Horizontal">
+                <StackPanel Orientation="Horizontal" Visibility="{Binding VisibilityBottomLeftStatus}">
                     <TextBlock Text="{Binding TextStatusBottomLeft}"
                                VerticalAlignment="Center"
                                Margin="5 0 0 0"/>
@@ -56,14 +56,21 @@
                                     Width="90"
                                     Margin="5 0 0 0"
                                     Command="{Binding ReloadMapCommand}"/>
+                            <Border BorderThickness="2 0 0 0" Margin="5 0 5 0" BorderBrush="Gray"/>
+                            <Button Content="{Binding TextButtonScanNetwork}"
+                                    Height="25"
+                                    IsEnabled="{Binding EnableScanButton}"
+                                    Width="120"
+                                    Margin="5 0 0 0"
+                                    Command="{Binding ScanLocalNetworkCommand}"/>
                         </StackPanel>
                     </Grid>
-                    <Grid Grid.Row="1">
+                    <Grid Grid.Row="1" Margin="0 2 0 0">
                         <Border BorderThickness="0 1 0 0" BorderBrush="Black">
                             <ScrollViewer HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Auto">
                                 <gp:GraphLayout Graph="{Binding Graphs}"
-                                                 LayoutAlgorithmType="ISOM"
+                                                 LayoutAlgorithmType="{Binding Settings.Parametrs.LayoutAlgorithmType}"
                                                  OverlapRemovalAlgorithmType="FSA"
                                                 HighlightAlgorithmType="Simple"
                                                 IsAnimationEnabled="False"
@@ -77,7 +84,7 @@
             <TabItem Header="Настройки">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="300"/>
+                        <ColumnDefinition Width="500"/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
                     <GroupBox Header="Настройки">
@@ -87,7 +94,7 @@
                                     <Grid Margin="0 0 0 2">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition/>
-                                            <ColumnDefinition/>
+                                            <ColumnDefinition Width="150"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Text="TTL" FontSize="14" Grid.Column="0"/>
                                         <TextBox FontSize="14" Grid.Column="1" Text="{Binding Settings.Parametrs.TTL}"/>
@@ -95,10 +102,25 @@
                                     <Grid Margin="0 0 0 2">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition/>
-                                            <ColumnDefinition/>
+                                            <ColumnDefinition Width="150"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Text="Таймаут" FontSize="14" Grid.Column="0"/>
                                         <TextBox FontSize="14" Grid.Column="1" Text="{Binding Settings.Parametrs.Timeout}"/>
+                                    </Grid>
+                                </StackPanel>
+                            </GroupBox>
+                            <GroupBox Header="Настройки отрисовки">
+                                <StackPanel Orientation="Vertical">
+                                    <Grid Margin="0 0 0 2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition/>
+                                            <ColumnDefinition Width="150"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Алгоритм расположения" FontSize="14" Grid.Column="0"/>
+                                        <ComboBox FontSize="14"
+                                                  ItemsSource="{Binding ListLayoutAlgorithmType}"
+                                                  Grid.Column="1"
+                                                  SelectedItem="{Binding Settings.Parametrs.LayoutAlgorithmType, UpdateSourceTrigger=PropertyChanged}"/>
                                     </Grid>
                                 </StackPanel>
                             </GroupBox>

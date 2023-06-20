@@ -1,9 +1,11 @@
 ﻿
+using GraphSharp.Controls;
 using NetMap.Base.Command;
 using NetMap.Models;
 using NetMap.Service;
 using QuickGraph;
 using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -26,7 +28,6 @@ namespace NetMap.ViewModels.Windows
 
 			#region Commands
 			#endregion
-
 		}
 
 		#region Parametrs
@@ -52,6 +53,14 @@ namespace NetMap.ViewModels.Windows
 		private bool _EnableButtonClear = true;
 		/// <summary>Description</summary>
 		public bool EnableButtonClear { get => _EnableButtonClear; set => Set(ref _EnableButtonClear, value); }
+		#endregion
+
+
+		#region EnableScanButton: Description
+		/// <summary>Description</summary>
+		private bool _EnableScanButton = true;
+		/// <summary>Description</summary>
+		public bool EnableScanButton { get => _EnableScanButton; set => Set(ref _EnableScanButton, value); }
 		#endregion
 
 		#region TraceButtonEnable: Description
@@ -88,6 +97,26 @@ namespace NetMap.ViewModels.Windows
 		/// <summary>Description</summary>
 		public string TraceAddress { get => _TraceAddress; set => Set(ref _TraceAddress, value); }
 		#endregion
+
+		#region TextButtonScanNetwork: Description
+		/// <summary>Description</summary>
+		private string _TextButtonScanNetwork = "Сканировать сеть";
+		/// <summary>Description</summary>
+		public string TextButtonScanNetwork { get => _TextButtonScanNetwork; set => Set(ref _TextButtonScanNetwork, value); }
+		#endregion
+		#endregion
+
+
+		#region ListLayoutAlgorithmType: Description
+		/// <summary>Description</summary>
+		private ObservableCollection<string> _ListLayoutAlgorithmType = new ObservableCollection<string>()
+		{
+			"FR",
+			"ISOM",
+			"EfficientSugiyama",
+		};
+		/// <summary>Description</summary>
+		public ObservableCollection<string> ListLayoutAlgorithmType { get => _ListLayoutAlgorithmType; set => Set(ref _ListLayoutAlgorithmType, value); }
 		#endregion
 
 		#region Commands
@@ -126,6 +155,24 @@ namespace NetMap.ViewModels.Windows
 		private void OnClearTraceMapCommandExecuted(object e)
 		{
 			TraceRouteProvider.ClearGraphs();
+		}
+		#endregion
+
+		#region ScanLocalNetworkCommand: Description
+		private ICommand _ScanLocalNetworkCommand;
+		public ICommand ScanLocalNetworkCommand => _ScanLocalNetworkCommand ??= new LambdaCommand(OnScanLocalNetworkCommandExecuted, CanScanLocalNetworkCommandExecute);
+		private bool CanScanLocalNetworkCommandExecute(object e) => true;
+		private void OnScanLocalNetworkCommandExecuted(object e)
+		{
+			if (TextButtonScanNetwork == "Отмена")
+			{
+
+			}
+			else
+			{
+				Service.Net.ScannerLocalNetwork.ScanNetwork();
+
+			}
 		}
 		#endregion
 		#endregion

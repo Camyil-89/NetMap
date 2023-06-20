@@ -1,4 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using NetMap.Models;
+using NetMap.Models.Net;
+using NetMap.Service.Route;
 using NetMap.ViewModels.Windows;
 using QuickGraph;
 using System;
@@ -15,11 +18,7 @@ namespace NetMap.Service
 {
 	public static class TraceRouteProvider
 	{
-		private static TracertEntry EntryMain = new TracertEntry()
-		{
-			Address = "127.0.0.1\nЭто вы",
-			ReplyStatus = System.Net.NetworkInformation.IPStatus.Unknown
-		};
+		private static TraceRouteItem EntryMain;
 		private static string TargetAddress = "";
 		private static MainVM MainVM => App.Host.Services.GetRequiredService<MainVM>();
 		public static string GetIPAddressFromDNS(string hostname)
@@ -38,11 +37,24 @@ namespace NetMap.Service
 			catch { }
 			return null;
 		}
+		public static string IsDNS(string hostname)
+		{
+			try
+			{
+				IPAddress.Parse(hostname);
+				return null;
+			}
+			catch { }
+			return hostname;
+		}
 		public static void StartTrace(string address)
 		{
+			if (EntryMain == null)
+				CreateMainRoute();
 			MainVM.TextButtonTrace = "Отмена";
 			MainVM.TraceMode = ModeTrace.Stop;
 			MainVM.EnableButtonClear = false;
+			MainVM.EnableScanButton = false;
 			Task.Run(() =>
 			{
 				StatusBarProvider.ShowMessage("Разрешение доменных имен..");
@@ -50,82 +62,65 @@ namespace NetMap.Service
 				StatusBarProvider.ShowMessage($"Поиск пути к {ip}");
 				bool is_work = true;
 				bool is_change = false;
-				ReloadMap();
-				Task.Run(() =>
-				{
-					while (is_work)
-					{
-						if (is_change)
-						{
-							try
-							{
-								ReloadMap();
-							}
-							catch { }
-							is_change = false;
-						}
-						Thread.Sleep(16);
-					}
-					ReloadMap();
-				});
 				try
 				{
 					TargetAddress = ip;
-					foreach (var i in TraceRoute.Tracert(ip, 100, 400))
+					TraceSettings traceSettings = new TraceSettings()
 					{
-						StatusBarProvider.ShowMessage($"Поиск пути к {ip} | {i.Back.Address} > {i.Address}");
-
-						var find = TracertEntry.RecursiveAddressSearch(EntryMain, i.Back.Address);
-						if (find != null)
-							find.AddNext(TracertEntry.Copy(find, i));
-						else
-							EntryMain.AddNext(TracertEntry.Copy(EntryMain, i));
-
-						is_change = true;
+						TTL = Settings.Instance.Parametrs.TTL,
+						TargetAddress = ip,
+						TargetAddressDNS = IsDNS(address),
+						Timeout = Settings.Instance.Parametrs.Timeout,
+						MaxHops = Settings.Instance.Parametrs.TTL,
+					};
+					foreach (var route in RouteBuilder.TraceRoute(traceSettings))
+					{
+						App.Current.Dispatcher.Invoke(() =>
+						{
+							var find_route = RouteBuilder.FindRoute(route.ParentRoute.Address, EntryMain);
+							var copy_route = route.Copy();
+							find_route.AddChildrenRoute(copy_route);
+							if (FindVertices(find_route) == null)
+								MainVM.Graphs.AddVertex(find_route);
+							if (FindVertices(copy_route) == null)
+								MainVM.Graphs.AddVertex(copy_route);
+							MainVM.Graphs.AddEdge(new Edge<object>(FindVertices(find_route), FindVertices(copy_route)));
+						});
 					}
 				}
 				catch (Exception ex) { MessageBox.Show($"Error:\n{ex.Message}"); }
 				is_work = false;
 				MainVM.EnableButtonClear = true;
+				MainVM.EnableScanButton = true;
 				MainVM.TraceMode = ModeTrace.Start;
 				MainVM.TextButtonTrace = "Cтарт";
+				StatusBarProvider.CloseMessage();
 			});
+		}
+		private static object FindVertices(TraceRouteItem route)
+		{
+			return MainVM.Graphs.Vertices.FirstOrDefault((i) => ((TraceRouteItem)i).Address == route.Address);
 		}
 		public static void ReloadMap()
 		{
 			MainVM.Graphs = new BidirectionalGraph<object, IEdge<object>>();
-			void Next(TracertEntry master, TracertEntry slave)
+			void Next(TraceRouteItem master, TraceRouteItem slave)
 			{
-				string node_1 = $"{master.Address}";
-				string node_2 = "";
-
-				if (master.Address == TargetAddress)
-				{
-					node_1 = $"{master.Address}\nКонечный узел";
-				}
-
-				if (slave.Address == TargetAddress)
-					node_2 = $"{slave.Address}\nКонечный узел";
-				else if (slave.Find)
-					node_2 = $"{slave.Address}\nНеподтвержденный";
-				else
-					node_2 = $"{slave.Address}";
-
 
 				App.Current.Dispatcher.Invoke(() =>
 				{
-					if (MainVM.Graphs.Vertices.Contains(node_1) == false)
-						MainVM.Graphs.AddVertex(node_1);
-					if (MainVM.Graphs.Vertices.Contains(node_2) == false)
-						MainVM.Graphs.AddVertex(node_2);
-					MainVM.Graphs.AddEdge(new Edge<object>(node_1, node_2));
+					if (FindVertices(master) == null)
+						MainVM.Graphs.AddVertex(master);
+					if (FindVertices(slave) == null)
+						MainVM.Graphs.AddVertex(slave);
+					MainVM.Graphs.AddEdge(new Edge<object>(FindVertices(master), FindVertices(slave)));
 				});
-				foreach (var i in slave.Next)
+				foreach (var i in slave.ChildrenRoutes)
 				{
 					Next(slave, i);
 				}
 			}
-			foreach (var i in EntryMain.Next)
+			foreach (var i in EntryMain.ChildrenRoutes)
 			{
 				Next(EntryMain, i);
 			}
@@ -144,13 +139,16 @@ namespace NetMap.Service
 			});
 
 		}
+		private static void CreateMainRoute()
+		{
+			EntryMain = new TraceRouteItem()
+			{
+				Address = "127.0.0.1",
+			};
+		}
 		public static void ClearGraphs()
 		{
-			EntryMain = new TracertEntry()
-			{
-				Address = "127.0.0.1\nЭто вы",
-				ReplyStatus = System.Net.NetworkInformation.IPStatus.Unknown
-			};
+			CreateMainRoute();
 			MainVM.Graphs.Clear();
 			MainVM.Graphs = new BidirectionalGraph<object, IEdge<object>>();
 			ReloadMap();
@@ -158,12 +156,12 @@ namespace NetMap.Service
 
 		private static void StopTraceAndWait()
 		{
-			TraceRoute.IsAbort = true;
-			while (TraceRoute.IsStop == false)
+			RouteBuilder.IsAbort = true;
+			while (RouteBuilder.IsStop == false)
 			{
 				Thread.Sleep(16);
 			}
-			TraceRoute.IsAbort = false;
+			RouteBuilder.IsAbort = false;
 		}
 	}
 }

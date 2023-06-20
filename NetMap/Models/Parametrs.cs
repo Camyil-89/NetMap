@@ -155,5 +155,21 @@ namespace NetMap.Models
 		/// <summary>Description</summary>
 		public bool EnableTraceMap { get => _EnableTraceMap; set => Set(ref _EnableTraceMap, value); }
 		#endregion
+
+
+		#region MinAddress: Description
+		/// <summary>Description</summary>
+		private string _MinAddress = "192.168.1.0";
+		/// <summary>Description</summary>
+		public string MinAddress { get => _MinAddress; set => Set(ref _MinAddress, value); }
+		#endregion
+
+
+		#region MaxAddress: Description
+		/// <summary>Description</summary>
+		private string _MaxAddress = "192.168.2.0";
+		/// <summary>Description</summary>
+		public string MaxAddress { get => _MaxAddress; set => Set(ref _MaxAddress, value); }
+		#endregion
 	}
 }

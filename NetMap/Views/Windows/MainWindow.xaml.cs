@@ -1,4 +1,6 @@
-﻿using System;
+﻿using GraphSharp.Algorithms.Layout.Simple.FDP;
+using GraphSharp.Algorithms.Layout.Simple.Hierarchical;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

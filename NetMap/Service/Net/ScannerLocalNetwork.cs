@@ -66,18 +66,21 @@ namespace NetMap.Service.Net
 				Stopwatch stopwatch1 = Stopwatch.StartNew();
 				while (IsAbort == false)
 				{
-					if (IsSend == false && PingComplete >= PingSend)
-						break;
-					Thread.Sleep(16);
-					MainVM.EnableButtonClear = false;
-					MainVM.TraceButtonEnable = false;
-					if (stopwatch1.ElapsedMilliseconds > 1000)
+					try
 					{
-						stopwatch1.Restart();
-						time_to_end = ((count_addresses - last_send) / (PingSend - last_send));
-						last_send = PingSend;
-					}
-					StatusBarProvider.ShowMessage($"Сканирование локальной сети... [{subnet}] [Найдено: {MainVM.ListNetAddresses.Count}] [Ответов: {PingComplete} Отправлено: {PingSend} ({Math.Round(((double)PingSend / (double)count_addresses) * 100, 1)}%) Всего: {count_addresses} ({Math.Round(stopwatch.Elapsed.TotalSeconds, 1)} сек.)] Осталось примерно: {time_to_end / 60 / 60} Ч {time_to_end / 60 % 60} М {time_to_end % 60} С");
+						if (PingComplete >= PingSend)
+							break;
+						Thread.Sleep(100);
+						MainVM.EnableButtonClear = false;
+						MainVM.TraceButtonEnable = false;
+						if (stopwatch1.ElapsedMilliseconds > 1000)
+						{
+							stopwatch1.Restart();
+							time_to_end = ((count_addresses - last_send) / (PingSend - last_send));
+							last_send = PingSend;
+						}
+						StatusBarProvider.ShowMessage($"Сканирование локальной сети... [{subnet}] [Найдено: {MainVM.ListNetAddresses.Count}] [Ответов: {PingComplete} Отправлено: {PingSend} ({Math.Round(((double)PingSend / (double)count_addresses) * 100, 1)}%) Всего: {count_addresses} ({Math.Round(stopwatch.Elapsed.TotalSeconds, 1)} сек.)] Осталось примерно: {time_to_end / 60 / 60} Ч {time_to_end / 60 % 60} М {time_to_end % 60} С");
+					} catch { }
 				}
 				MainVM.EnableButtonClear = true;
 				MainVM.TraceButtonEnable = true;

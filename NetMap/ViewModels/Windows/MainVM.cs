@@ -141,22 +141,7 @@ namespace NetMap.ViewModels.Windows
 		public ObservableCollection<string> ListNetAddresses { get => _ListNetAddresses; set => Set(ref _ListNetAddresses, value); }
 		#endregion
 
-
-		#region MinAddress: Description
-		/// <summary>Description</summary>
-		private string _MinAddress = "192.168.1.0";
-		/// <summary>Description</summary>
-		public string MinAddress { get => _MinAddress; set => Set(ref _MinAddress, value); }
-		#endregion
-
-
-		#region MaxAddress: Description
-		/// <summary>Description</summary>
-		private string _MaxAddress = "192.168.1.255";
-		/// <summary>Description</summary>
-		public string MaxAddress { get => _MaxAddress; set => Set(ref _MaxAddress, value); }
-		#endregion
-		#endregion
+		
 
 
 		#region LocalNetworkSubnet: Description
@@ -183,6 +168,8 @@ namespace NetMap.ViewModels.Windows
 		};
 		/// <summary>Description</summary>
 		public ObservableCollection<string> ListLayoutAlgorithmType { get => _ListLayoutAlgorithmType; set => Set(ref _ListLayoutAlgorithmType, value); }
+		#endregion
+
 		#endregion
 
 		#region Commands
@@ -245,8 +232,8 @@ namespace NetMap.ViewModels.Windows
 				try
 				{
 					ListNetAddresses.Clear();
-					address_min = ScannerLocalNetwork.ParseAddress(MinAddress);
-					address_max = ScannerLocalNetwork.ParseAddress(MaxAddress);
+					address_min = ScannerLocalNetwork.ParseAddress(Settings.Parametrs.MinAddress);
+					address_max = ScannerLocalNetwork.ParseAddress(Settings.Parametrs.MaxAddress);
 					if (ScannerLocalNetwork.MinThenMax(address_min, address_max) == false)
 					{
 						MessageBox.Show("Левый адрес должен быть меньше чем правый!", "NetMap");

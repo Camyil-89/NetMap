@@ -133,23 +133,24 @@ namespace NetMap.Service
 				return;
 			void Next(TraceRouteItem master, TraceRouteItem slave)
 			{	
-				App.Current.Dispatcher.Invoke(() =>
-				{
-					if (FindVertices(master) == null)
-						MainVM.Graphs.AddVertex(master);
-					if (FindVertices(slave) == null)
-						MainVM.Graphs.AddVertex(slave);
-					AddEdge(master, slave);
-				});
+				if (FindVertices(master) == null)
+					MainVM.Graphs.AddVertex(master);
+				if (FindVertices(slave) == null)
+					MainVM.Graphs.AddVertex(slave);
+				AddEdge(master, slave);
 				foreach (var i in slave.ChildrenRoutes)
 				{
 					Next(slave, i);
 				}
 			}
-			foreach (var i in EntryMain.ChildrenRoutes)
+			App.Current.Dispatcher.Invoke(() =>
 			{
-				Next(EntryMain, i);
-			}
+				foreach (var i in EntryMain.ChildrenRoutes)
+				{
+					Next(EntryMain, i);
+				}
+			});
+			
 		}
 		public static void StopTrace()
 		{

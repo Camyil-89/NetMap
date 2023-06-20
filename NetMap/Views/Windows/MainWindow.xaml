@@ -80,13 +80,13 @@
 									 Height="25"
 									 Width="110"
 									 VerticalContentAlignment="Center"
-									 Text="{Binding MinAddress}"/>
+									 Text="{Binding Settings.Parametrs.MinAddress}"/>
 							<Border BorderBrush="Black" BorderThickness="0 2 0 0" Margin="5" Width="10" VerticalAlignment="Center"/>
 							<TextBox FontSize="14"
 									 Height="25"
 									 Width="110"
 									 VerticalContentAlignment="Center"
-									 Text="{Binding MaxAddress}"/>
+									 Text="{Binding Settings.Parametrs.MaxAddress}"/>
 							<Button Content="{Binding TextButtonScanNetwork}"
                                     Height="25"
                                     IsEnabled="{Binding EnableScanButton}"
@@ -109,6 +109,7 @@
                             <ScrollViewer HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Auto">
                                 <gp:GraphLayout Graph="{Binding Graphs}"
+												x:Name="GPL"
 												 IsEnabled="{Binding Settings.Parametrs.EnableTraceMap}"
                                                  LayoutAlgorithmType="{Binding Settings.Parametrs.LayoutAlgorithmType}"
                                                  OverlapRemovalAlgorithmType="FSA"

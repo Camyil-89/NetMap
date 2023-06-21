@@ -52,6 +52,12 @@ namespace NetMap.ViewModels.Windows
 		public BidirectionalGraph<object, IEdge<object>> Graphs { get => _Graphs; set => Set(ref _Graphs, value); }
 		#endregion
 
+		#region Title: Description
+		/// <summary>Description</summary>
+		private string _Title = "NetMap";
+		/// <summary>Description</summary>
+		public string Title { get => _Title; set => Set(ref _Title, value); }
+		#endregion
 		public Settings Settings => Settings.Instance;
 
 		#region TraceMode: Description

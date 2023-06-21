@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using NetMap.Models;
 using NetMap.Models.Net;
+using NetMap.Service.Notification;
 using NetMap.Service.Route;
 using NetMap.ViewModels.Windows;
 using QuickGraph;
@@ -16,7 +17,7 @@ using System.Windows;
 
 namespace NetMap.Service
 {
-	public static class TraceRouteProvider
+    public static class TraceRouteProvider
 	{
 		public static TraceRouteItem EntryMain { get; private set; }
 		private static string TargetAddress = "";
@@ -120,7 +121,10 @@ namespace NetMap.Service
 					return;
 				}
 			}
-			MainVM.Graphs.AddEdge(new Edge<object>(FindVertices(source), FindVertices(target)));
+			var source_gp = FindVertices(source);
+			var target_gp = FindVertices(target);
+			MainVM.Graphs.AddEdge(new Edge<object>(source_gp, target_gp));
+			//TitleProvider.ChangeTitle($"Узлов: {MainVM.Graphs.Vertices.Count()}");
 		}
 		public static object FindVertices(TraceRouteItem route)
 		{
@@ -131,8 +135,10 @@ namespace NetMap.Service
 			MainVM.Graphs = new BidirectionalGraph<object, IEdge<object>>();
 			if (Settings.Instance.Parametrs.EnableTraceMap == false)
 				return;
+			int count = 0;
 			void Next(TraceRouteItem master, TraceRouteItem slave)
-			{	
+			{
+				count++;
 				if (FindVertices(master) == null)
 					MainVM.Graphs.AddVertex(master);
 				if (FindVertices(slave) == null)
@@ -142,6 +148,7 @@ namespace NetMap.Service
 				{
 					Next(slave, i);
 				}
+				TitleProvider.ChangeTitle($"Узлов: {count}");
 			}
 			App.Current.Dispatcher.Invoke(() =>
 			{
@@ -179,6 +186,7 @@ namespace NetMap.Service
 			MainVM.Graphs.Clear();
 			MainVM.Graphs = new BidirectionalGraph<object, IEdge<object>>();
 			ReloadMap();
+			TitleProvider.ChangeTitle($"");
 		}
 
 		private static void StopTraceAndWait()

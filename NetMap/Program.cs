@@ -37,12 +37,12 @@ namespace NetMap
 		{
 			try
 			{
-				Settings.Instance.Parametrs = XMLProvider.Load<Parametrs>($"{Directory.GetCurrentDirectory()}\\settings.xml");
+				Settings.Instance.Parametrs = XMLProvider.Load<Parametrs>($"{PathToSave}\\settings.xml");
 			} catch { }
 		}
 		private static void Save()
 		{
-			XMLProvider.Save<Parametrs>($"{Directory.GetCurrentDirectory()}\\settings.xml", Settings.Instance.Parametrs);
+			XMLProvider.Save<Parametrs>($"{PathToSave}\\settings.xml", Settings.Instance.Parametrs);
 		}
 		private static void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
 		{

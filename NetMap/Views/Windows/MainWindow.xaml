@@ -6,7 +6,9 @@
         xmlns:gp="clr-namespace:GraphSharp.Controls;assembly=GraphSharp.Controls"
         xmlns:local="clr-namespace:NetMap"
         mc:Ignorable="d"
-        Title="NetMap" Height="700" Width="1200"
+        Title="{Binding Title}"
+        Height="700"
+        Width="1200"
         WindowStartupLocation="CenterScreen"
         DataContext="{Binding MainVM, Source={StaticResource Locator}}">
     <DockPanel>

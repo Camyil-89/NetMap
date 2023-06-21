@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualBasic;
 using NetMap.Models;
+using NetMap.Service.Notification;
 using NetMap.Service.Route;
 using NetMap.ViewModels.Windows;
 using QuickGraph;
@@ -17,7 +18,7 @@ using System.Windows;
 
 namespace NetMap.Service.Net
 {
-	public static class ScannerLocalNetwork
+    public static class ScannerLocalNetwork
 	{
 		private static MainVM MainVM => App.Host.Services.GetRequiredService<MainVM>();
 		private static int PingSend = 0;
@@ -80,7 +81,8 @@ namespace NetMap.Service.Net
 							last_send = PingSend;
 						}
 						StatusBarProvider.ShowMessage($"Сканирование локальной сети... [{subnet}] [Найдено: {MainVM.ListNetAddresses.Count}] [Ответов: {PingComplete} Отправлено: {PingSend} ({Math.Round(((double)PingSend / (double)count_addresses) * 100, 1)}%) Всего: {count_addresses} ({Math.Round(stopwatch.Elapsed.TotalSeconds, 1)} сек.)] Осталось примерно: {time_to_end / 60 / 60} Ч {time_to_end / 60 % 60} М {time_to_end % 60} С");
-					} catch { }
+					}
+					catch { }
 				}
 				MainVM.EnableButtonClear = true;
 				MainVM.TraceButtonEnable = true;
@@ -98,33 +100,58 @@ namespace NetMap.Service.Net
 			StatusBarProvider.ShowMessage("Сканирование пула адресов...");
 			Task.Run(() =>
 			{
-				int count = 0;
-				foreach (var address in pool)
+				try
 				{
-					count++;
-					if (IsAbort)
-						break;
-					if (TraceRouteProvider.EntryMain == null)
-						TraceRouteProvider.CreateMainRoute();
-
-					StatusBarProvider.ShowMessage($"Сканирование пула адресов... [{address}] [{count}\\{pool.Count()}]");
-					TraceSettings traceSettings = new TraceSettings()
+					int count = 0;
+					List<Task> tasks = new List<Task>();
+					foreach (var address in pool)
 					{
-						TTL = Settings.Instance.Parametrs.TTL,
-						TargetAddress = address,
-						TargetAddressDNS = "",
-						TraceMap = Settings.Instance.Parametrs.DynamicTraceMapOnScan,
-						EnableReloadMap = Settings.Instance.Parametrs.DynamicTraceMapOnScan,
-						Timeout = Settings.Instance.Parametrs.Timeout,
-						MaxHops = Settings.Instance.Parametrs.TTL,
-					};
-					TraceRouteProvider.Trace(traceSettings);
+						count++;
+						if (IsAbort)
+							break;
+						if (TraceRouteProvider.EntryMain == null)
+							TraceRouteProvider.CreateMainRoute();
+
+						StatusBarProvider.ShowMessage($"Сканирование пула адресов... [{address}] [{count}\\{pool.Count()}]");
+
+						var ts = Task.Run(() =>
+						{
+							TraceSettings traceSettings = new TraceSettings()
+							{
+								TTL = Settings.Instance.Parametrs.TTL,
+								TargetAddress = address,
+								TargetAddressDNS = "",
+								TraceMap = Settings.Instance.Parametrs.DynamicTraceMapOnScan,
+								EnableReloadMap = Settings.Instance.Parametrs.DynamicTraceMapOnScan,
+								Timeout = Settings.Instance.Parametrs.Timeout,
+								MaxHops = Settings.Instance.Parametrs.TTL,
+							};
+							TraceRouteProvider.Trace(traceSettings);
+						});
+						tasks.Add(ts);
+					}
+					Task.Run(() =>
+					{
+						int count = 0;
+						while (count < tasks.Count)
+						{
+							foreach (var i in tasks)
+							{
+								if (i.IsCompleted)
+									count++;
+							}
+							Thread.Sleep(1000);
+							StatusBarProvider.ShowMessage($"Сканирование пула адресов... [{count}\\{pool.Count()}]");
+						}
+						App.Current.Dispatcher.Invoke(() => { TraceRouteProvider.ReloadMap(); });
+						MainVM.EnableButtonClear = true;
+						MainVM.TraceButtonEnable = true;
+						MainVM.TextButtonScanNetwork = "Сканировать сеть";
+						StatusBarProvider.CloseMessage();
+					});
 				}
-				App.Current.Dispatcher.Invoke(() => { TraceRouteProvider.ReloadMap(); });
-				MainVM.EnableButtonClear = true;
-				MainVM.TraceButtonEnable = true;
-				MainVM.TextButtonScanNetwork = "Сканировать сеть";
-				StatusBarProvider.CloseMessage();
+				catch (Exception ex) { Console.WriteLine(ex); }
+
 			});
 		}
 		public static void StopScanNetwork()
@@ -182,17 +209,11 @@ namespace NetMap.Service.Net
 		}
 		public static int CountAddressesInRange(byte[] array_min, byte[] array_max)
 		{
-			int count = 0;
-			byte[] tmp_1 = new byte[4];
-			byte[] tmp_2 = new byte[4];
-			Array.Copy(array_min, tmp_1, 4);
-			Array.Copy(array_max, tmp_2, 4);
-			while (MinThenMax(tmp_1, tmp_2))
-			{
-				IncrementAddress(tmp_1);
-				count++;
-			}
-			return count;
+			var actet_1 = (int)((array_max[0] - array_min[0]) * Math.Pow(256, 3));
+			var actet_2 = (int)((array_max[1] - array_min[1]) * Math.Pow(256, 2));
+			var actet_3 = (int)((array_max[2] - array_min[2]) * Math.Pow(256, 1));
+			var actet_4 = (array_max[3] - array_min[3]);
+			return actet_1 + actet_2 + actet_3 + actet_4;
 		}
 		public static bool MinThenMax(byte[] array, byte[] array_max)
 		{

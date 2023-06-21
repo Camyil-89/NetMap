@@ -86,14 +86,18 @@ namespace NetMap.Models.Net
 				info = "\nЭто вы";
 			else if (IsTarget)
 				info += "\nКонечный узел";
-			
+
 			return $"{Address}{info}";
 		}
 		public void AddChildrenRoute(TraceRouteItem route)
 		{
 			if (ChildrenRoutes.FirstOrDefault(i => i.Address == route.Address) == null)
 			{
-				App.Current.Dispatcher.Invoke(() => { ChildrenRoutes.Add(route); });
+				App.Current.Dispatcher.Invoke(() =>
+				{
+					ChildrenRoutes.Add(route);
+				});
+
 			}
 		}
 
